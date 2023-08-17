@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -21,6 +22,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.coding404.jwt.security.filter.CustomLoginFilter;
 import com.coding404.jwt.security.filter.FilterOne;
 import com.coding404.jwt.security.filter.FilterTwo;
+import com.coding404.jwt.security.filter.JwtAuthorizationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -68,6 +70,24 @@ public class SecurityConfig {
 		//http.addFilterBefore(new CustomLoginFilter(), UsernamePasswordAuthenticationFilter.class);
 		http.addFilter(new CustomLoginFilter(authenticationManager));
 		
+		//5. jwt검증필터를 등록
+		//http.addFilterBefore(new JwtAuthorizationFilter(authenticationManager), BasicAuthenticationFilter.class);
+		http.addFilter(new JwtAuthorizationFilter(authenticationManager));
+		
+		
+		//6.요청별로 필터실행시키기
+		// /login 요청에만 CustomLoginFilter가 실행됨
+		http.requestMatchers()
+			.antMatchers("/login")
+			.and()
+			.addFilter(new CustomLoginFilter(authenticationManager));
+		
+		//api로 시작하는 요청만 jwt 필터적용
+		http.requestMatchers()
+			.antMatchers("/api/v1/**")
+			.antMatchers("/api/v2/**")
+			.and()
+			.addFilter(new JwtAuthorizationFilter(authenticationManager));
 		
 		
 		

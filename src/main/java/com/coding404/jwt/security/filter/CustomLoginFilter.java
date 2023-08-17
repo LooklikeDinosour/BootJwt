@@ -1,5 +1,9 @@
 package com.coding404.jwt.security.filter;
 
+import java.io.IOException;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -8,6 +12,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.coding404.jwt.security.config.JWTService;
+import com.coding404.jwt.user.MyUserDetails;
 
 public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter { //필터를 상속받음
 
@@ -54,6 +61,39 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter { //
 		
 		
 		return authentication; //여기서 반환되는 return은 시큐리티 세션이 가져가서 new 시큐리티세션(new 인증객체(new 유저객체))형태로 저장시킴
+	}
+
+	//로그인 성공 후에 실행되는 메서드
+	@Override
+	protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
+			Authentication authResult) throws IOException, ServletException {
+	
+		System.out.println("=======로그인 성공 핸들러 실행됨========");
+		
+		//토큰발행 헤더에 담고 클라이언트로 전달
+	
+		System.out.println("로그인 성공 이후 인증객체: " + authResult);
+		
+		MyUserDetails principal = (MyUserDetails)authResult.getPrincipal();
+		
+		String token = JWTService.createToken(principal.getUsername()); //회원 아이디
+		
+		response.setContentType("text/html; charset=UTF-8;");
+		response.setHeader("Authorization", "Bearer " + token);
+		response.getWriter().println("로그인 성공(아이디)" + principal.getUsername());
+	}
+
+	//로그인 실패 후에 실행되는 메서드
+	@Override
+	protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
+			AuthenticationException failed) throws IOException, ServletException {
+
+		System.out.println("=======로그인 실패 핸들러 실행됨========");
+		
+		response.setContentType("text/html; charset=UTF-8;");
+	
+		//response.getWriter().println("응답할내용");
+		response.sendError(500, "아이디 비밀번호를 확인하세요");
 	} 
 	
 	
